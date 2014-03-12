@@ -151,46 +151,15 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
 
 - (void)audioRouteChangeListener: (NSNotification*)notification {
     if (self.isHeadsetPluggedIn && self.headsetSwitch.on) {
-            _inputSource.text = @"Sensor";
-        
-            // Dismiss alert and set headsetswitch to on
-            [_sensorAlert dismissWithClickedButtonIndex:0 animated:YES];
-            _headsetSwitch.on = YES;
-        
-            // Call flippHeadset to start transmission functionallity
-            [self flippedHeadset:self];
-        
+        // Dismiss alert and set headsetswitch to on
+        [_sensorAlert dismissWithClickedButtonIndex:0 animated:YES];
+        self.headsetSwitch.on = YES;
+        [self flippedHeadset:self];
     } else if (!self.isHeadsetPluggedIn && self.headsetSwitch.on) {
-            // Stop Timer
-            [_levelTimer invalidate];
-            _levelTimer = nil;
-            
-            // Kill power Tone
-            [self togglePower:NO];
-        
-            // Setup image for Alert View
-            UIImageView *alertImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"GSF_Insert_sensor_alert-v2.png"]];
-        
-            // Setup Alert View
-            _sensorAlert =
-            [[SDCAlertView alloc]
-             initWithTitle:@"No Sensor"
-             message:@"Please insert the GSF sensor to collect this data."
-             delegate:self
-             cancelButtonTitle:nil
-             otherButtonTitles:@"Cancel", @"Use Mic", nil];
-            
-            [alertImageView setTranslatesAutoresizingMaskIntoConstraints:NO];
-            [_sensorAlert.contentView addSubview:alertImageView];
-            [alertImageView sdc_horizontallyCenterInSuperview];
-            [_sensorAlert.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-[alertImageView]|"
-                                                                                             options:0
-                                                                                             metrics:nil
-                                                                                               views:NSDictionaryOfVariableBindings(alertImageView)]];
-            // Show Alert
-            [_sensorAlert show];
+        // Stop all services
+        [self flippedHeadset:self];
     } else
-            _inputSource.text = @"None";
+        _inputSource.text = @"Poop";
 }
 
 
@@ -247,7 +216,7 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
 
 
 - (void)togglePower:(BOOL)powerOn {
-	if (!powerOn) {
+	if (!powerOn && _powerTone) {
         // Set Master Volume to 50%
         self.volumeSlider.value = 0.5f;
         
@@ -256,7 +225,7 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
 		AudioUnitUninitialize(_powerTone);
 		AudioComponentInstanceDispose(_powerTone);
 		_powerTone = nil;
-	} else {
+	} else if (powerOn && !_powerTone){
 		[self createToneUnit];
 		
 		// Stop changing parameters on the unit
@@ -293,33 +262,29 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
 
 
 - (void)alertView:(SDCAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    NSLog(@"alertView Button Index: %ld", (long)buttonIndex);
     switch (buttonIndex) {
         case 0:
             // Set switch to off and change input label text
             self.headsetSwitch.on = NO ;
             _inputSource.text = @"None";
+            // Stop level timer
+            if (_levelTimer) {
+                [_levelTimer invalidate];
+                _levelTimer = nil;
+            }
+            
+            // Stop Power Tone
+            [self togglePower:NO];
             
             //Disable sliders
-            _frequencySlider.userInteractionEnabled = NO;
-            _frequencySlider.tintColor = [UIColor grayColor];
-            _amplitudeSlider.userInteractionEnabled = NO;
-            _amplitudeSlider.tintColor = [UIColor grayColor];
-            break;
-        case 1:
-            // Start level timer
-            _levelTimer = [NSTimer scheduledTimerWithTimeInterval:0.03 target:self selector:@selector(levelTimerCallBack:) userInfo:nil repeats:YES];
-            
-            // Change input label text
-            _inputSource.text = @"Mic";
-            
-            //Disable sliders
-            _frequencySlider.userInteractionEnabled = NO;
-            _frequencySlider.tintColor = [UIColor grayColor];
-            _amplitudeSlider.userInteractionEnabled = NO;
-            _amplitudeSlider.tintColor = [UIColor grayColor];
+            self.frequencySlider.userInteractionEnabled = NO;
+            self.frequencySlider.tintColor = [UIColor grayColor];
+            self.amplitudeSlider.userInteractionEnabled = NO;
+            self.amplitudeSlider.tintColor = [UIColor grayColor];
             break;
         default:
-            NSLog(@"Blowing It: Alert not handled");
+            NSLog(@"Blowing it alertView: case not handled");
             break;
     }
 }
@@ -354,23 +319,27 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
 - (IBAction)flippedHeadset:(id)sender {
     if (self.headsetSwitch.on && self.isHeadsetPluggedIn) {
         // Start Sampler
-        _levelTimer = [NSTimer scheduledTimerWithTimeInterval:0.03 target:self selector:@selector(levelTimerCallBack:) userInfo:nil repeats:YES];
+        self.levelTimer = [NSTimer scheduledTimerWithTimeInterval:0.03 target:self selector:@selector(levelTimerCallBack:) userInfo:nil repeats:YES];
         
         // Change input text
-        _inputSource.text = @"Sensor";
+        self.inputSource.text = @"Sensor";
         
         // Start Power Tone
         [self togglePower:YES];
         
         //Enable sliders
-        _frequencySlider.userInteractionEnabled = YES;
-        _frequencySlider.tintColor = [UIColor greenColor];
-        _amplitudeSlider.userInteractionEnabled = YES;
-        _amplitudeSlider.tintColor = [UIColor greenColor];
+        self.frequencySlider.userInteractionEnabled = YES;
+        self.frequencySlider.tintColor = [UIColor greenColor];
+        self.amplitudeSlider.userInteractionEnabled = YES;
+        self.amplitudeSlider.tintColor = [UIColor greenColor];
+        
+        NSLog(@"flippedSwitch Made it: to slider setup");
     } else if (!self.headsetSwitch.on){
         // Stop level timer
-        [_levelTimer invalidate];
-        _levelTimer = nil;
+        if (_levelTimer) {
+            [_levelTimer invalidate];
+            _levelTimer = nil;
+        }
         
         // Change input text
         _inputSource.text = @"None";
@@ -384,9 +353,12 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
         _amplitudeSlider.userInteractionEnabled = NO;
         _amplitudeSlider.tintColor = [UIColor grayColor];
     } else {
+        NSLog(@"flippedSwitch Made it: setup alert");
         // Stop level timer
-        [_levelTimer invalidate];
-        _levelTimer = nil;
+        if (_levelTimer) {
+            [_levelTimer invalidate];
+            _levelTimer = nil;
+        }
         
         // Stop Power Tone
         [self togglePower:NO];
@@ -401,15 +373,15 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
          message:@"Please insert the GSF sensor to collect this data."
          delegate:self
          cancelButtonTitle:nil
-         otherButtonTitles:@"Cancel", @"Use Mic", nil];
+         otherButtonTitles:@"Cancel", nil];
          
         [alertImageView setTranslatesAutoresizingMaskIntoConstraints:NO];
         [_sensorAlert.contentView addSubview:alertImageView];
         [alertImageView sdc_horizontallyCenterInSuperview];
         [_sensorAlert.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-[alertImageView]|"
-        options:0
-        metrics:nil
-        views:NSDictionaryOfVariableBindings(alertImageView)]];
+                                                                                         options:0
+                                                                                         metrics:nil
+                                                                                           views:NSDictionaryOfVariableBindings(alertImageView)]];
         
         [_sensorAlert show];
     }
