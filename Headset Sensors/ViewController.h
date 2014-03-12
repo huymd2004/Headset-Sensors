@@ -24,7 +24,6 @@
 // input properties
 @property AVAudioRecorder *recorder;
 @property NSTimer *levelTimer;
-@property NSTimer *alertTimer;
 @property double lowPassFiltered;
 @property (weak, nonatomic) IBOutlet UILabel *avgInput;
 @property (weak, nonatomic) IBOutlet UILabel *peakInput;
@@ -47,9 +46,9 @@
 
 // function prototypes
 - (void)levelTimerCallBack:(NSTimer *) timer;
-- (void) alertTimerCallBack:(NSTimer *) timer;
 - (BOOL)isHeadsetPluggedIn;
 - (IBAction)flippedHeadset:(id)sender;
+- (void)audioRouteChangeListener: (NSNotification*)notification;
 
 - (IBAction)frequencySliderChange:(id)sender;
 - (IBAction)amplitudeSliderChange:(id)sender;
