@@ -67,6 +67,7 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
 @synthesize runningTotal = _runningTotal;
 @synthesize lastBit = _lastBit;
 @synthesize cutOff = _cutOff;
+@synthesize avgDBLabel = _avgDBLabel;
 @synthesize inputThroughput = _inputThroughput;
 @synthesize inputSource = _inputSource;
 @synthesize headsetSwitch = _headsetSwitch;
@@ -238,16 +239,17 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
 -(void) levelTimerCallBack:(NSTimer *)timer {
     [self.recorder updateMeters];
     
-    double avgDBInput = [self.recorder averagePowerForChannel:0];
-//    double peakDBInput = [self.recorder peakPowerForChannel:0];
+    float avgDBInput = [self.recorder averagePowerForChannel:0];
+    self.avgDBLabel.text = [NSString stringWithFormat:@"%3.3f", avgDBInput];
+    float peakDBInput = [self.recorder peakPowerForChannel:0];
     int currentBit = 0;
     
-    if (avgDBInput > self.cutOff) {
+    if (peakDBInput >= -0.99f) { // set inital cutoff to high value.
         currentBit = 1;
     }
-    
-    NSLog(@"Avg DB:     %3.3f", avgDBInput);
-    NSLog(@"Cut Off DB: %3.3f", self.cutOff);
+//    NSLog(@"Avg DB:     %3.3f", avgDBInput);
+    NSLog(@"Peak DB:    %3.3f", peakDBInput);
+//    NSLog(@"Cut Off DB: %3.3f", self.cutOff);
     
     self.currentBitLabel.text = [NSString stringWithFormat:@"%d", currentBit];
     
@@ -315,7 +317,7 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
 - (void)secondTimerCallBack:(NSTimer *)timer {
     self.inputThroughput.text = [NSString stringWithFormat:@"%d", self.runningTotal];
     self.runningTotal = 0;
-    NSLog(@"                    One Second");
+    NSLog(@"                    *** One Second");
 }
 
 - (void)alertView:(SDCAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {

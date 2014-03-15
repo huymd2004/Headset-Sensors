@@ -30,6 +30,7 @@
 @property int runningTotal;
 @property int lastBit;
 @property double cutOff;
+@property (weak, nonatomic) IBOutlet UILabel *avgDBLabel;
 @property (weak, nonatomic) IBOutlet UILabel *inputSource;
 @property (weak, nonatomic) IBOutlet UILabel *inputThroughput;
 @property (weak, nonatomic) IBOutlet UILabel *currentBitLabel;
