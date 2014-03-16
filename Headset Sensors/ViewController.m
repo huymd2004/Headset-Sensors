@@ -36,8 +36,10 @@ static OSStatus renderToneCallback(void *inRefCon,
 	
 	// Generate the samples
 	for (UInt32 frame = 0; frame < inNumberFrames; frame++) {
-		buffer[frame] = sin(theta) * viewController.amplitude;
-		
+		Float32 poop = sin(theta) * viewController.amplitude;
+		//NSLog(@"Wave: %f", poop);
+        buffer[frame] = poop;
+        
 		theta += theta_increment;
 		if (theta > 2.0 * M_PI) {
 			theta -= 2.0 * M_PI;
@@ -159,7 +161,7 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
         // Stop all services
         [self flippedHeadset:self];
     } else
-        _inputSource.text = @"Poop";
+        self.inputSource.text = @"Poop";
 }
 
 
