@@ -126,10 +126,10 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
     } else
         NSLog(@"%@",[err description]);
     
-    _timerInterval = 0.001;
+    _timerInterval = 0.001f;
     _runningTotal = 0;
     _lastBit = 0;
-    _cutOff = -1.000;
+    _cutOff = -31.0f;
     
     // Power tone setup
     _sampleRate = 44100;
@@ -241,14 +241,14 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
     
     float avgDBInput = [self.recorder averagePowerForChannel:0];
     self.avgDBLabel.text = [NSString stringWithFormat:@"%3.3f", avgDBInput];
-    float peakDBInput = [self.recorder peakPowerForChannel:0];
+//    float peakDBInput = [self.recorder peakPowerForChannel:0];
     int currentBit = 0;
     
-    if (peakDBInput >= -0.99f) { // set inital cutoff to high value.
+    if (avgDBInput < self.cutOff) { // set inital cutoff to high value.
         currentBit = 1;
     }
-//    NSLog(@"Avg DB:     %3.3f", avgDBInput);
-    NSLog(@"Peak DB:    %3.3f", peakDBInput);
+//    NSLog(@"Avg DB:     %5.3f", avgDBInput);
+//    NSLog(@"Peak DB:    %3.3f", peakDBInput);
 //    NSLog(@"Cut Off DB: %3.3f", self.cutOff);
     
     self.currentBitLabel.text = [NSString stringWithFormat:@"%d", currentBit];
@@ -317,7 +317,7 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
 - (void)secondTimerCallBack:(NSTimer *)timer {
     self.inputThroughput.text = [NSString stringWithFormat:@"%d", self.runningTotal];
     self.runningTotal = 0;
-    NSLog(@"                    *** One Second");
+    //NSLog(@"                    *** One Second");
 }
 
 - (void)alertView:(SDCAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
