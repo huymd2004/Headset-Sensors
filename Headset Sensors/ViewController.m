@@ -126,7 +126,7 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState) {
     } else
         NSLog(@"%@",[err description]);
     
-    _timerInterval = 0.001f;
+    _timerInterval = 0.031f;
     _runningTotal = 0;
     _lastBit = 0;
     _cutOff = -31.0f;
